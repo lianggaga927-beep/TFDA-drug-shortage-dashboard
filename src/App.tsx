@@ -67,7 +67,7 @@ export default function App() {
   const [loading, setLoading]       = useState(true);
  
   useEffect(() => {
-    fetch('/data/supply_status_latest.json')
+    fetch(`${import.meta.env.BASE_URL}data/supply_status_latest.json`)
       .then(res => res.json())
       .then(json => { setData(json); setLoading(false); })
       .catch(() => setLoading(false));
