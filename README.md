@@ -17,7 +17,7 @@
 * **📅 巢狀時間軸收摺 (Nested Accordion)**：自動依據公告時間進行「年 ➔ 月」雙層群組化，俐落收納龐大的歷史紀錄。
 * **⏳ 智慧時間萃取 (Regex Extraction)**：運用正規表達式，自動從冗長公文中精萃出「預計恢復時間」並轉換為高亮度標籤 (Badge)。
 * **🔍 即時檢索 (Live Search)**：支援以「中文品名」或「許可證字號」進行快速字串過濾。
-
+* 📅 Live Demo: [(https://lianggaga927-beep.github.io/TFDA-drug-shortage-dashboard/)]
 ---
 
 ## 🏗️ 系統架構 (Architecture)
