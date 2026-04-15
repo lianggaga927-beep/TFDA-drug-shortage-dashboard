@@ -133,7 +133,12 @@ export default function App() {
     const withAlt = filter(data?.datasets['54504_with_alternative'], 'amber');
     const resolved = filter(data?.datasets['54506_resolved'], 'emerald');
     
-    return { noAlt, withAlt, resolved, all: [...noAlt, ...withAlt, ...resolved] };
+    // 按照公告更新時間排序（新的在前）
+    const all = [...noAlt, ...withAlt, ...resolved].sort((a, b) => 
+      new Date(b.公告更新時間).getTime() - new Date(a.公告更新時間).getTime()
+    );
+    
+    return { noAlt, withAlt, resolved, all };
   }, [data, searchTerm]);
 
   const stats = useCompositeStats(processedData.all);
