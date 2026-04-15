@@ -1,41 +1,54 @@
 import os
 import json
 import requests
+import subprocess
 from datetime import datetime
-from bs4 import BeautifulSoup # 新增這行 (需先在終端機執行 pip install beautifulsoup4)
+from bs4 import BeautifulSoup
 
-# 採用您確認的最終正確版 API 網址
+# 1. API 網址 (JSON)
 API_ENDPOINTS = {
     "54504_with_alternative": "https://data.fda.gov.tw/data/opendata/export/104/json",
     "54505_no_alternative": "https://data.fda.gov.tw/data/opendata/export/105/json",
     "54506_resolved": "https://data.fda.gov.tw/data/opendata/export/106/json"
 }
 
-def fetch_data(url):
+# 2. 網頁網址 (HTML)
+HTML_ENDPOINTS = {
+    "54507_soliciting": "https://dsms.fda.gov.tw/NewsList.aspx?s=2",
+    "54508_solicited": "https://dsms.fda.gov.tw/NewsList.aspx?s=3" 
+}
+
+def fetch_api_data(url):
+    """使用標準 requests 抓取友善的 JSON API"""
     try:
         response = requests.get(url, timeout=30)
-        response.raise_for_status() 
+        response.raise_for_status()
         return response.json()
     except Exception as e:
-        print(f"⚠️ 讀取失敗 {url}: {e}")
+        print(f"⚠️ API 讀取失敗 {url}: {e}")
         return []
-    
-def fetch_dsms_html(url):
+
+def fetch_dsms_html_via_curl(url):
+    """終極殺手鐧：完全繞過 Python，直接呼叫作業系統底層的 curl 來穿透老舊防火牆"""
     try:
-        # 模擬瀏覽器，避免被阻擋
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()
+        # 使用 subprocess 執行系統指令 curl (-s 靜默模式, -k 略過 SSL 驗證, -A 偽裝瀏覽器)
+        result = subprocess.run(
+            ["curl", "-s", "-k", 
+             "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", 
+             url],
+            capture_output=True,
+            check=True
+        )
         
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # 強制以 utf-8 解碼，忽略錯誤字元
+        html_content = result.stdout.decode('utf-8', errors='ignore')
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
         extracted_data = []
-        
-        # 尋找包含「公告日期」的表格
-        tables = soup.find_all('table')
         target_table = None
-        for table in tables:
+        
+        # 尋找公告表格
+        for table in soup.find_all('table'):
             if "公告日期" in table.get_text():
                 target_table = table
                 break
@@ -43,15 +56,13 @@ def fetch_dsms_html(url):
         if not target_table:
             return []
 
-        # 逐列解析
-        rows = target_table.find_all('tr')
-        for row in rows:
+        # 解析表格資料
+        for row in target_table.find_all('tr'):
             cols = row.find_all(['td', 'th'])
             if len(cols) >= 2:
                 date_text = cols[0].get_text(strip=True)
                 subject_text = cols[1].get_text(strip=True)
                 
-                # 排除表頭與空值
                 if date_text == "公告日期" or not date_text:
                     continue
                     
@@ -77,24 +88,17 @@ def main():
         "datasets": {}
     }
 
-    # 1. 抓取原有的 JSON API (54504, 54505, 54506)
+    # 階段 1：抓取 JSON API
     for key, url in API_ENDPOINTS.items():
         print(f"📥 正在抓取 API: {key}...")
-        data = fetch_data(url)
+        data = fetch_api_data(url)
         combined_data["datasets"][key] = data
         print(f"✅ 成功: {key} 共取得 {len(data)} 筆紀錄。\n")
 
-    # 2. 抓取新增的網頁 HTML 資料
-    HTML_ENDPOINTS = {
-        # 公開徵求供應廠商
-        "54507_soliciting": "https://dsms.fda.gov.tw/NewsList.aspx?s=2",
-        # 已徵得供應廠商 (請將下方網址替換為實際點擊該分頁後的正確 URL)
-        "54508_solicited": "https://dsms.fda.gov.tw/NewsList.aspx?s=3" 
-    }
-
+    # 階段 2：使用系統 Curl 抓取老舊 HTML
     for key, url in HTML_ENDPOINTS.items():
-        print(f"🕸️ 正在爬取網頁: {key}...")
-        data = fetch_dsms_html(url)
+        print(f"🕸️ 正在爬取網頁 (Curl 模式): {key}...")
+        data = fetch_dsms_html_via_curl(url)
         combined_data["datasets"][key] = data
         print(f"✅ 成功: {key} 共取得 {len(data)} 筆紀錄。\n")
 

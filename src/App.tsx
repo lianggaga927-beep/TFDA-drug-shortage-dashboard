@@ -92,6 +92,9 @@ export default function App() {
   const noAlt    = filterList(data?.datasets['54505_no_alternative'] || []);
   const withAlt  = filterList(data?.datasets['54504_with_alternative'] || []);
   const resolved = filterList(data?.datasets['54506_resolved'] || []);
+  // 👇 新增這兩行來接接爬蟲抓到的資料
+  const soliciting = filterList(data?.datasets['54507_soliciting'] || []);
+  const solicited  = filterList(data?.datasets['54508_solicited'] || []);
   const recentItems = data ? getRecentItems(data.datasets) : [];
  
   return (
@@ -136,12 +139,20 @@ export default function App() {
  
       {/* ── Main ── */}
       <main className="main">
- 
+
         {/* 最新動態儀表板 — 搜尋時隱藏 */}
         {!searchTerm && <RecentDashboard items={recentItems} />}
- 
+
         <Section title="經評估【無】替代藥品" colorTheme="red"     list={noAlt}    />
+        
+        {/* 👇 新增公開徵求區塊 (放無替代藥品下面) */}
+        <Section title="公開徵求供應廠商"     colorTheme="amber"   list={soliciting} />
+
         <Section title="經評估【有】替代藥品" colorTheme="amber"   list={withAlt}  />
+        
+        {/* 👇 新增已徵得區塊 (放有替代藥品下面) */}
+        <Section title="已徵得供應廠商"       colorTheme="emerald" list={solicited} />
+        
         <Section title="藥品已解除短缺"       colorTheme="emerald" list={resolved} />
       </main>
     </>
