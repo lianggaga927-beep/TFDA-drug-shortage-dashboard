@@ -1,7 +1,8 @@
 # 🏥 西藥供應資訊儀表板 (NHI Drug Supply Monitor)
 
-專為臨床醫療人員、藥局採購與藥師設計的西藥供應狀態監測面板。本系統透過自動化排程介接衛福部食藥署開放資料，提供即時、視覺化且易於檢索的藥品短缺與替代資訊，大幅降低臨床盤點與交班的行政成本。
+專為臨床醫療人員、藥局採購與藥師設計的西藥供應狀態監測面板。本系統透過自動化排程介接衛福部食藥署開放資料，提供即時、視覺化且易於檢索的藥品短缺與替代資訊。
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-blue?style=for-the-badge)](https://lianggaga927-beep.github.io/TFDA-drug-shortage-dashboard/)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-5-646cff.svg?logo=vite)
@@ -9,15 +10,12 @@
 
 ## ✨ 核心功能 (Features)
 
-* **🤖 自動化資料流 (Zero-Maintenance)**：內建 GitHub Actions 排程，每週自動向政府 API 抓取並清洗資料，產出靜態 JSON，實現零伺服器維運成本。
-* **📊 視覺化風險分級 (Visual Hierarchy)**：
-    * 🟥 **紅區**：經評估【無】替代藥品（最高警戒）
-    * 🟨 **黃區**：經評估【有】替代藥品（需注意）
-    * 🟩 **綠區**：藥品已解除短缺（安全）
-* **📅 巢狀時間軸收摺 (Nested Accordion)**：自動依據公告時間進行「年 ➔ 月」雙層群組化，俐落收納龐大的歷史紀錄。
-* **⏳ 智慧時間萃取 (Regex Extraction)**：運用正規表達式，自動從冗長公文中精萃出「預計恢復時間」並轉換為高亮度標籤 (Badge)。
-* **🔍 即時檢索 (Live Search)**：支援以「中文品名」或「許可證字號」進行快速字串過濾。
-* 📅 Live Demo: [(https://lianggaga927-beep.github.io/TFDA-drug-shortage-dashboard/)]
+* **臨床導向的缺藥分級**：嚴格區分「無替代藥品 (紅)」、「有替代藥品 (黃)」與「已解除短缺 (綠)」，協助快速確立處置優先級。
+* **智慧型決策輔助**：
+  * 自動計算「缺藥持續天數」，精準標示長期斷鏈品項。
+  * 運用正規表達式 (Regex) 自動萃取公告內文的「替代藥品建議」與「預計恢復時間」。
+* **多維度數據分析 (Recharts)**：提供月度/年度的紅黃綠複合疊加長條圖 (Stacked Bar Chart)，視覺化呈現整體供應壓力與恢復彈性的趨勢變化。
+* **高效率多條件篩選器**：支援以「字串 (品名/字號)」、「狀態 (紅/黃/綠)」、「公告年份」進行交集過濾，並具備自訂排序邏輯（最新公告/缺藥最久/字母排序）。
 ---
 
 ## 🏗️ 系統架構 (Architecture)
