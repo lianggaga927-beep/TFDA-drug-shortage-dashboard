@@ -30,19 +30,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          
-# --- 請將這三段插入到打包網頁的步驟之前 ---
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          
-      - name: Install Python dependencies
-        run: pip install requests beautifulsoup4
-        
-      - name: Fetch latest TFDA data
-        run: python scripts/fetch_fda_data.py
-      # ------------------------------------------
 
       - name: Install dependencies
         run: npm install
