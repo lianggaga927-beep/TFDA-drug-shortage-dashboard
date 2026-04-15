@@ -165,10 +165,37 @@ export default function App() {
             <div className="stat-chip stat-chip--amber">{processedData.withAlt.length} 有替代</div>
             <div className="stat-chip stat-chip--emerald">{processedData.resolved.length} 已解除</div>
           </div>
-          <div className="search-wrap">
-            <span className="search-wrap__icon">⌕</span>
-            <input type="text" className="search-input" placeholder="搜尋藥品名稱或字號..." onChange={e => setSearchTerm(e.target.value)} />
+{/* 👇 請將原本的 <div className="search-wrap">...</div> 整個替換成下面這段 👇 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '99px', // 改為更現代的圓角藥丸形狀
+            padding: '8px 16px',
+            width: '100%',
+            maxWidth: '350px',
+            boxSizing: 'border-box',
+            marginTop: '12px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          }}>
+            <span style={{ color: '#94a3b8', fontSize: '20px', marginRight: '8px', lineHeight: '1' }}>⌕</span>
+            <input 
+              type="text" 
+              placeholder="搜尋藥品名稱或字號..." 
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                width: '100%',
+                fontSize: '16px', // 設定 16px 可防止 iOS Safari 點擊時自動放大螢幕
+                color: '#334155',
+                background: 'transparent',
+                padding: 0
+              }}
+            />
           </div>
+          {/* 👆 替換到這邊結束 👆 */}
         </div>
       </nav>
 
