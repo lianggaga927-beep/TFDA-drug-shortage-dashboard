@@ -100,8 +100,8 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all'); // 新增：月份篩選
-  const [showLatestTen, setShowLatestTen] = useState(false);    // 新增：最新十筆勾選
+  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [showLatestTen, setShowLatestTen] = useState(false);
   const [sortMode, setSortMode] = useState<'newest'|'longest'|'name'>('newest');
 
   useEffect(() => {
@@ -124,7 +124,6 @@ export default function App() {
 
     const availableYears = Array.from(new Set(all.map(i => (i.公告更新時間||'').split('/')[0]))).filter(Boolean).sort().reverse();
 
-    // 排序需在篩選前或中途完成，以確保「最新十筆」能抓到正確資料
     all.sort((a, b) => {
       if (sortMode === 'newest') return new Date(b.公告更新時間).getTime() - new Date(a.公告更新時間).getTime();
       if (sortMode === 'longest') return (b._days || 0) - (a._days || 0);
@@ -132,7 +131,6 @@ export default function App() {
       return 0;
     });
 
-    // 核心篩選邏輯
     if (showLatestTen) {
       all = all.slice(0, 10);
     } else {
@@ -157,10 +155,16 @@ export default function App() {
   const stats = useCompositeStats(processedData.all);
   const chartData = timeMode === 'month' ? stats.monthlyChart : stats.yearlyChart;
 
-  if (loading) return <div className="loading"><div className="loading__spinner" />系統讀取中...</div>;
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4f8', gap: '16px' }}>
+      <div style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTop: '4px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <p style={{ color: '#64748b', fontWeight: 600 }}>系統讀取中…</p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '48px', fontFamily: '"Noto Sans TC", sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f0f4f8', display: 'flex', flexDirection: 'column', fontFamily: '"Noto Sans TC", sans-serif' }}>
       <nav style={{ backgroundColor: '#0f172a', padding: '16px 24px', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <div style={{ maxWidth: '1152px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -172,12 +176,12 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '8px 16px', width: '100%', maxWidth: '350px' }}>
             <span style={{ color: '#475569', fontSize: '16px', marginRight: '8px' }}>🔍</span>
-            <input type="text" placeholder="搜尋藥品名稱或許可證字號…" onChange={e => setSearchTerm(e.target.value)} style={{ border: 'none', outline: 'none', flex: 1, fontSize: '15px', color: '#e2e8f0', background: 'transparent' }} />
+            <input type="text" placeholder="搜尋藥品..." onChange={e => setSearchTerm(e.target.value)} style={{ border: 'none', outline: 'none', flex: 1, fontSize: '15px', color: '#e2e8f0', background: 'transparent' }} />
           </div>
         </div>
       </nav>
 
-      <main style={{ maxWidth: '1152px', margin: '24px auto 0', padding: '0 16px' }}>
+      <main style={{ maxWidth: '1152px', margin: '24px auto 0', padding: '0 16px', flex: 1 }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '12px', width: 'fit-content' }}>
           <button onClick={() => setActiveTab('list')} style={{ padding: '8px 20px', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', border: 'none', backgroundColor: activeTab === 'list' ? '#ffffff' : 'transparent', color: activeTab === 'list' ? '#1d4ed8' : '#64748b' }}>📋 清單列表</button>
           <button onClick={() => setActiveTab('stats')} style={{ padding: '8px 20px', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', border: 'none', backgroundColor: activeTab === 'stats' ? '#ffffff' : 'transparent', color: activeTab === 'stats' ? '#1d4ed8' : '#64748b' }}>📊 數據分析</button>
@@ -185,47 +189,38 @@ export default function App() {
 
         {activeTab === 'list' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            
-            {/* 控制台：新增月份與最新十筆 */}
             <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#475569' }}>⚙️ 篩選排序</div>
-              
-              <select value={filterStatus} disabled={showLatestTen} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}>
+              <select value={filterStatus} disabled={showLatestTen} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                 <option value="all">所有狀態</option>
                 <option value="red">無替代</option>
                 <option value="amber">有替代</option>
                 <option value="emerald">已解除</option>
               </select>
-
-              <select value={filterYear} disabled={showLatestTen} onChange={e => setFilterYear(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}>
-                <option value="all">年份: 全部</option>
+              <select value={filterYear} disabled={showLatestTen} onChange={e => setFilterYear(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                <option value="all">所有年份</option>
                 {processedData.availableYears.map(y => <option key={y} value={y}>{y}年</option>)}
               </select>
-
-              <select value={filterMonth} disabled={showLatestTen} onChange={e => setFilterMonth(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}>
-                <option value="all">月份: 全部</option>
+              <select value={filterMonth} disabled={showLatestTen} onChange={e => setFilterMonth(e.target.value)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                <option value="all">所有月份</option>
                 {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(m => <option key={m} value={m}>{m}月</option>)}
               </select>
-
-              <select value={sortMode} onChange={e => setSortMode(e.target.value as any)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}>
-                <option value="newest">排序：最新公告</option>
-                <option value="longest">排序：天數最久</option>
-                <option value="name">排序：名稱 A-Z</option>
+              <select value={sortMode} onChange={e => setSortMode(e.target.value as any)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                <option value="newest">最新公告</option>
+                <option value="longest">缺藥最久</option>
+                <option value="name">名稱排序</option>
               </select>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#2563eb', cursor: 'pointer', borderLeft: '1px solid #e2e8f0', paddingLeft: '16px' }}>
-                <input type="checkbox" checked={showLatestTen} onChange={e => setShowLatestTen(e.target.checked)} />
-                最新十筆資訊
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#2563eb', cursor: 'pointer' }}>
+                <input type="checkbox" checked={showLatestTen} onChange={e => setShowLatestTen(e.target.checked)} /> 最新十筆
               </label>
             </div>
-
             <Section title="經評估【無】替代藥品" colorTheme="red" list={processedData.noAlt} />
             <Section title="經評估【有】替代藥品" colorTheme="amber" list={processedData.withAlt} />
             <Section title="藥品已解除短缺" colorTheme="emerald" list={processedData.resolved} />
           </div>
         ) : (
           <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+             {/* 統計圖表內容... */}
+             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 700 }}>📊 供應趨勢統計</h2>
               <div style={{ display: 'flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
                 <button onClick={() => setTimeMode('month')} style={{ padding: '6px 16px', borderRadius: '6px', fontWeight: 700, fontSize: '13px', border: 'none', backgroundColor: timeMode === 'month' ? '#ffffff' : 'transparent', color: timeMode === 'month' ? '#2563eb' : '#64748b' }}>月統計</button>
@@ -234,33 +229,51 @@ export default function App() {
             </div>
             <div style={{ height: '400px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" tick={{fontSize: 12}} />
-                  <YAxis tick={{fontSize: 12}} />
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="無替代(紅)" stackId="a" fill="#ef4444" barSize={35} />
-                  <Bar dataKey="有替代(黃)" stackId="a" fill="#f59e0b" barSize={35} />
-                  <Bar dataKey="已解除(綠)" fill="#10b981" barSize={35} />
+                  <Bar dataKey="無替代(紅)" stackId="a" fill="#ef4444" />
+                  <Bar dataKey="有替代(黃)" stackId="a" fill="#f59e0b" />
+                  <Bar dataKey="已解除(綠)" fill="#10b981" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
       </main>
+
+      {/* ── 👇 新增：底部警語區塊 👇 ── */}
+      <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '32px 16px', marginTop: '64px' }}>
+        <div style={{ maxWidth: '1152px', margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: '14px', marginBottom: '8px', lineHeight: 1.6 }}>
+            [ 依政府 OpenData API 抓取最新資訊，但最新訊息仍建議查閱 TFDA 網頁 ]
+          </p>
+          <a 
+            href="https://dsms.fda.gov.tw/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: '#60a5fa', fontSize: '14px', textDecoration: 'none', fontWeight: 600 }}
+          >
+            🔗 西藥醫療器材供應平台 (官方網站)
+          </a>
+          <div style={{ marginTop: '20px', fontSize: '12px', opacity: 0.6 }}>
+            &copy; 2026 Clinical Pharmacy Supply Dashboard
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-// ----------------------------------------------------------------------
-// 子元件 (Section & DrugCard)
-// ----------------------------------------------------------------------
+// ── 子元件 (保持不變) ──
 function Section({ title, colorTheme, list }: any) {
   if (!list.length) return null;
   const p = { red: '#ef4444', amber: '#f59e0b', emerald: '#10b981' }[colorTheme as Theme];
   return (
-    <section style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: `1px solid ${p}40`, overflow: 'hidden' }}>
+    <section style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: `1px solid ${p}40`, overflow: 'hidden', marginBottom: '16px' }}>
       <div style={{ backgroundColor: `${p}10`, borderBottom: `1px solid ${p}40`, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '4px', height: '24px', backgroundColor: p, borderRadius: '2px' }} />
         <h2 style={{ fontSize: '16px', fontWeight: 700, flex: 1 }}>{title}</h2>
@@ -277,31 +290,21 @@ function DrugCard({ item, theme }: any) {
   const [open, setOpen] = useState(false);
   const rec = extractRecoveryTime(item.供應狀態);
   const t = { red: {bg:'#fee2e2', text:'#991b1b'}, amber: {bg:'#fef3c7', text:'#92400e'}, emerald: {bg:'#d1fae5', text:'#065f46'} }[theme as Theme];
-  
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#fff', overflow: 'hidden' }}>
-      <div onClick={() => setOpen(!open)} style={{ padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#fff' }}>
+      <div onClick={() => setOpen(!open)} style={{ padding: '16px', cursor: 'pointer' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>{item.公告更新時間}</span>
             {theme !== 'emerald' && <span style={{ fontSize: '12px', fontWeight: 700, color: '#dc2626' }}>🔥 缺藥 {item._days} 天</span>}
           </div>
           <span style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
         </div>
-        <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.中文品名}</div>
-        
-        {/* 👇 就是這裡！把遺漏的替代品建議 (altText) 與恢復時間 (rec, t) 顯示出來 👇 */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
-          {item._altText && theme !== 'emerald' && (
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#0369a1', backgroundColor: '#e0f2fe', padding: '4px 8px', borderRadius: '6px' }}>💡 替代：{item._altText}</div>
-          )}
-          {rec && (
-            <div style={{ fontSize: '12px', fontWeight: 600, color: t?.text, backgroundColor: t?.bg, padding: '4px 8px', borderRadius: '6px' }}>
-              ⏳ {rec}
-            </div>
-          )}
+        <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>{item.中文品名}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+           {item._altText && theme !== 'emerald' && <span style={{ fontSize: '12px', color: '#0369a1', backgroundColor: '#e0f2fe', padding: '2px 8px', borderRadius: '6px' }}>💡 替代：{item._altText}</span>}
+           {rec && <span style={{ fontSize: '12px', color: t.text, backgroundColor: t.bg, padding: '2px 8px', borderRadius: '6px' }}>⏳ {rec}</span>}
         </div>
-
       </div>
       {open && <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderTop: '1px dashed #cbd5e1', fontSize: '14px', whiteSpace: 'pre-line' }}>{item.供應狀態?.replace(/\\r\\n/g, '\n')}</div>}
     </div>
