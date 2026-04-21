@@ -277,20 +277,31 @@ function DrugCard({ item, theme }: any) {
   const [open, setOpen] = useState(false);
   const rec = extractRecoveryTime(item.供應狀態);
   const t = { red: {bg:'#fee2e2', text:'#991b1b'}, amber: {bg:'#fef3c7', text:'#92400e'}, emerald: {bg:'#d1fae5', text:'#065f46'} }[theme as Theme];
+  
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#fff' }}>
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#fff', overflow: 'hidden' }}>
       <div onClick={() => setOpen(!open)} style={{ padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>{item.公告更新時間}</span>
             {theme !== 'emerald' && <span style={{ fontSize: '12px', fontWeight: 700, color: '#dc2626' }}>🔥 缺藥 {item._days} 天</span>}
           </div>
           <span style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
         </div>
         <div style={{ fontWeight: 700, fontSize: '15px' }}>{item.中文品名}</div>
-        {item._altText && theme !== 'emerald' && (
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#0369a1', backgroundColor: '#e0f2fe', padding: '4px 8px', borderRadius: '6px' }}>💡 替代：{item._altText}</div>
-        )}
+        
+        {/* 👇 就是這裡！把遺漏的替代品建議 (altText) 與恢復時間 (rec, t) 顯示出來 👇 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+          {item._altText && theme !== 'emerald' && (
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#0369a1', backgroundColor: '#e0f2fe', padding: '4px 8px', borderRadius: '6px' }}>💡 替代：{item._altText}</div>
+          )}
+          {rec && (
+            <div style={{ fontSize: '12px', fontWeight: 600, color: t?.text, backgroundColor: t?.bg, padding: '4px 8px', borderRadius: '6px' }}>
+              ⏳ {rec}
+            </div>
+          )}
+        </div>
+
       </div>
       {open && <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderTop: '1px dashed #cbd5e1', fontSize: '14px', whiteSpace: 'pre-line' }}>{item.供應狀態?.replace(/\\r\\n/g, '\n')}</div>}
     </div>
