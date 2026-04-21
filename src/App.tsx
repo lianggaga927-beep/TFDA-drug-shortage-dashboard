@@ -55,7 +55,10 @@ const extractRecoveryTime = (text: string) => {
 const useCompositeStats = (allData: DrugRecord[]) => {
   return useMemo(() => {
     if (!allData.length) return { uniqueDrugCount: 0, monthlyChart: [], yearlyChart: [] };
-    const uniqueDrugs = new Set(allData.map(item => item.許可證字號 || '未知字號'));
+    
+    // 修正：若無字號，改用品名作為唯一值辨識，避免空字號藥品互相覆蓋
+    const uniqueDrugs = new Set(allData.map(item => (item.許可證字號 || item.中文品名 || '未知').trim()));
+    
     const monthlyMap: Record<string, any> = {};
     const yearlyMap: Record<string, any> = {};
 
@@ -111,31 +114,54 @@ export default function App() {
       .catch(() => setLoading(false));
   }, []);
 
-  // 核心資料管線：去重 -> 排序 -> 過濾
+  // 核心資料管線：精準去重 -> 排序 -> 過濾
   const processedData = useMemo(() => {
     if (!data) return { all: [], availableYears: [], noAlt: [], withAlt: [], resolved: [] };
 
-    // 1. 取出原始資料並標註來源
     const raw106 = (data.datasets['54506_resolved'] || []).map(i => ({ ...i, _theme: 'emerald' as Theme }));
     const raw104 = (data.datasets['54504_with_alternative'] || []).map(i => ({ ...i, _theme: 'amber' as Theme }));
     const raw105 = (data.datasets['54505_no_alternative'] || []).map(i => ({ ...i, _theme: 'red' as Theme }));
 
-    // 2. 利用 Map 進行許可證字號去重 (優先級: 106 > 104 > 105)
-    const drugMap = new Map<string, DrugRecord>();
-    raw105.forEach(i => drugMap.set(i.許可證字號, i)); // 最低優先級先放入
-    raw104.forEach(i => drugMap.set(i.許可證字號, i)); // 覆蓋 105
-    raw106.forEach(i => drugMap.set(i.許可證字號, i)); // 最高優先級，覆蓋 104 與 105
+    // --- 🚀 修復：時間感知的殭屍紀錄清除邏輯 ---
+    // 1. 紀錄每個字號「最新」的解除時間
+    const resolvedDates = new Map<string, number>();
+    raw106.forEach(i => {
+      const license = (i.許可證字號 || '').trim();
+      if (license) {
+        const dTime = new Date(i.公告更新時間).getTime();
+        if (!resolvedDates.has(license) || dTime > resolvedDates.get(license)!) {
+          resolvedDates.set(license, dTime);
+        }
+      }
+    });
 
-    // 3. 轉回陣列並計算衍生欄位
-    let all = Array.from(drugMap.values()).map(item => ({
+    // 2. 過濾 104/105：如果該字號有「更晚或同日」的解除紀錄，才判定為殭屍並剔除
+    const clean104 = raw104.filter(i => {
+      const license = (i.許可證字號 || '').trim();
+      if (!license) return true; // 無字號無法確認，安全保留
+      const resTime = resolvedDates.get(license);
+      const myTime = new Date(i.公告更新時間).getTime();
+      return !(resTime && resTime >= myTime);
+    });
+
+    const clean105 = raw105.filter(i => {
+      const license = (i.許可證字號 || '').trim();
+      if (!license) return true;
+      const resTime = resolvedDates.get(license);
+      const myTime = new Date(i.公告更新時間).getTime();
+      return !(resTime && resTime >= myTime);
+    });
+
+    // 3. 重新組合所有真實資料
+    let all = [...clean105, ...clean104, ...raw106].map(item => ({
       ...item,
       _days: getDaysDiff(item.公告更新時間),
       _altText: extractAlternative(item.供應狀態)
     }));
+    // --------------------------------------------
 
     const availableYears = Array.from(new Set(all.map(i => (i.公告更新時間||'').split('/')[0]))).filter(Boolean).sort().reverse();
 
-    // 4. 排序邏輯
     all.sort((a, b) => {
       if (sortMode === 'newest') return new Date(b.公告更新時間).getTime() - new Date(a.公告更新時間).getTime();
       if (sortMode === 'longest') return (b._days || 0) - (a._days || 0);
@@ -143,7 +169,6 @@ export default function App() {
       return 0;
     });
 
-    // 5. 篩選邏輯 (文字 + 狀態 + 年份 + 月份，或最新十筆)
     if (showLatestTen) {
       all = all.slice(0, 10);
     } else {
@@ -321,7 +346,7 @@ function Section({ title, colorTheme, list }: any) {
   if (!list.length) return null;
   const p = { red: '#ef4444', amber: '#f59e0b', emerald: '#10b981' }[colorTheme as Theme];
   return (
-    <section style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: `1px solid ${p}40`, overflow: 'hidden' }}>
+    <section style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: `1px solid ${p}40`, overflow: 'hidden', marginBottom: '16px' }}>
       <div style={{ backgroundColor: `${p}10`, borderBottom: `1px solid ${p}40`, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '4px', height: '24px', backgroundColor: p, borderRadius: '2px' }} />
         <h2 style={{ fontSize: '16px', fontWeight: 700, flex: 1, margin: 0, color: '#1e293b' }}>{title}</h2>
