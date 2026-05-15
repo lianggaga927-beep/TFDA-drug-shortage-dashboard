@@ -232,9 +232,16 @@ export default function App() {
               <div style={{ color: '#94a3b8', fontSize: '12px' }}>NHI Drug Supply Monitor</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '8px 16px', width: '100%', maxWidth: '350px' }}>
-            <span style={{ color: '#475569', fontSize: '16px', marginRight: '8px' }}>🔍</span>
-            <input type="text" placeholder="搜尋藥品..." onChange={e => setSearchTerm(e.target.value)} style={{ border: 'none', outline: 'none', flex: 1, fontSize: '15px', color: '#e2e8f0', background: 'transparent' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', width: '100%', maxWidth: '350px' }}>
+            {data?.last_updated && (
+              <span style={{ color: '#475569', fontSize: '11px', letterSpacing: '0.02em' }}>
+                資料更新：{data.last_updated.slice(0, 16).replace('T', ' ')}
+              </span>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '8px 16px', width: '100%' }}>
+              <span style={{ color: '#475569', fontSize: '16px', marginRight: '8px' }}>🔍</span>
+              <input type="text" placeholder="搜尋藥品..." onChange={e => setSearchTerm(e.target.value)} style={{ border: 'none', outline: 'none', flex: 1, fontSize: '15px', color: '#e2e8f0', background: 'transparent' }} />
+            </div>
           </div>
         </div>
       </nav>
